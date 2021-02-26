@@ -2,22 +2,8 @@
 import warnings
 
 warnings.filterwarnings('ignore')  # 防止警告文件的包
-import numpy as np
 import pandas as pd  # 数据分析包
 import os
-import matplotlib.pyplot as plt  # 可视化包
-import matplotlib
-import seaborn as sns  # 可视化包
-from time import time
-from sklearn.preprocessing import scale  # 标准化操作
-from sklearn.model_selection import train_test_split  # 将数据集分成测试集和训练集
-from sklearn.metrics import f1_score  # F1得分
-import xgboost as xgb  # XGBoost模型
-from sklearn.svm import SVC  ## 支持向量机分类模型
-from sklearn.linear_model import LogisticRegression  # 逻辑回归模型
-from sklearn.model_selection import GridSearchCV  # 超参数调参模块
-from sklearn.metrics import make_scorer  # 模型评估
-import joblib  # 模型的保存与加载模块
 
 """1. 读取数据"""
 
@@ -68,6 +54,12 @@ for i in range(len(res_name), 0, -1):
 
 # 2.1 挑选信息列
 # 将挑选的信息放在一个新的列表中
+# HomeTeam: 主场球队名
+# AwayTeam: 客场球队名
+# FTHG: 主场球队全场进球数
+# FTAG: 客场球队全场进球数
+# FTR: 比赛结果 ( H= 主场赢, D= 平局, A= 客场赢)
+
 columns_req = ['HomeTeam', 'AwayTeam', 'FTHG', 'FTAG', 'FTR']
 playing_statistics = []  # 创造处理后数据名存放处
 playing_data = {}  # 键值对存储数据
@@ -154,6 +146,8 @@ def get_goals_diff(playing_stat):
     # 行是 team 列是 matchweek,
     # 39解释：19个球队，每个球队分主场客场2次，共38个赛次，但是range取不到最后一个值，故38+1=39
     GoalsDifference = pd.DataFrame(data=teams, index=[i for i in range(1, 39)]).T
+    print(GoalsDifference)
+
     GoalsDifference[0] = 0
     # 累加每个队的周比赛的净胜球数
     for i in range(2, 39):
