@@ -27,21 +27,21 @@ file_name(local_path)
 # 1.2 时间列表
 time_list = [filecsv_list[i][0:4] for i in range(len(filecsv_list))]
 
+obj_list = []
 # 1.3 用 Pandas.read_csv() 接口读取数据
 for i in range(len(res_name)):
     res_name[i] = pd.read_csv(local_path + filecsv_list[i], error_bad_lines=False, warn_bad_lines=False).dropna(
         axis=0, how='all')
-    print('第%2s个文件是%s,数据大小为%s' % (i + 1, filecsv_list[i], res_name[i].shape))
-
-data = res_name[0][['HomeTeam', 'AwayTeam', 'FTHG', 'FTAG', 'FTR']]
-print(type(data))
-
-for _, row in data.iterrows():
-    row_dict = {
-        'home_team': row['HomeTeam'],
-        'away_team': row['AwayTeam'],
-        'home_team_goals': row['FTHG'],
-        'away_team_goals': row['FTAG'],
-        'result': row['FTR'],
-    }
-    print(_, row_dict)
+    data = res_name[i][['HomeTeam', 'AwayTeam', 'FTHG', 'FTAG', 'FTR']]
+    for _, row in data.iterrows():
+        row_dict = {
+            'home_team': row['HomeTeam'],
+            'away_team': row['AwayTeam'],
+            'home_team_goals': row['FTHG'],
+            'away_team_goals': row['FTAG'],
+            'result': row['FTR'],
+            'match_season': time_list[i],
+        }
+        # print(row_dict)
+        obj_list.append(row_dict)
+print(len(obj_list))

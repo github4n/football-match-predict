@@ -3,6 +3,7 @@ import warnings
 
 warnings.filterwarnings('ignore')  # 防止警告文件的包
 import pandas as pd  # 数据分析包
+import numpy as np
 import os
 
 """1. 读取数据"""
@@ -120,6 +121,22 @@ for i in range(len(playing_statistics)):
     predictions = predictions_1(playing_statistics[i])
     acc = sum(predictions) / len(playing_statistics[i])
     print("%s年数据客场全胜预测的准确率是%s" % (time_list[i], acc))
+
+
+def score(data):
+    """ Arsenal作为主场队伍时，累计进球数 """
+    scores = []
+    for _, game in data.iterrows():
+        if game['HomeTeam'] == 'Arsenal':
+            scores.append(game['FTHG'])
+    return np.sum(scores)
+
+
+
+Arsenal_score = score(playing_statistics[2])
+print("Arsenal作为主场队伍在2005年时，累计进球数：%s" % (Arsenal_score))
+
+print(playing_statistics[5].groupby('HomeTeam').sum()['FTHG'])
 
 """3. 特征工程"""
 
