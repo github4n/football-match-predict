@@ -34,6 +34,7 @@ time_list = [filecsv_list[i][0:4] for i in range(len(filecsv_list))]
 
 # 1.3 用 Pandas.read_csv() 接口读取数据
 for i in range(len(res_name)):
+    print(local_path + filecsv_list[i])
     res_name[i] = pd.read_csv(local_path + filecsv_list[i], error_bad_lines=False, warn_bad_lines=False).dropna(
         axis=0, how='all')
     print('第%2s个文件是%s,数据大小为%s' % (i + 1, filecsv_list[i], res_name[i].shape))
