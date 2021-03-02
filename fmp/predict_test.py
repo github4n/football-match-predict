@@ -70,6 +70,8 @@ for i in range(len(res_name)):
     playing_statistics[i] = res_name[i][columns_req]
     print(time_list[i], 'playing_statistics[' + str(i) + ']', playing_statistics[i].shape)
 
+print(type(playing_statistics[0]))
+
 
 # 2.2 分析原始数据
 
@@ -131,7 +133,6 @@ def score(data):
         if game['HomeTeam'] == 'Arsenal':
             scores.append(game['FTHG'])
     return np.sum(scores)
-
 
 
 Arsenal_score = score(playing_statistics[2])
@@ -347,6 +348,9 @@ print(playing_statistics[2].tail())
 # 将各个DataFrame表合并在一张表中
 playing_stat = pd.concat(playing_statistics, ignore_index=True)
 
+print('---------------------------------------------------------------------------------------------------------------')
+print(playing_stat)
+
 # HTGD, ATGD ,HTP, ATP的值 除以 week 数，得到平均分
 cols = ['HTGD', 'ATGD', 'HTP', 'ATP']
 playing_stat.MW = playing_stat.MW.astype(float)
@@ -390,7 +394,11 @@ playing_stat['FTR'] = playing_stat.FTR.apply(only_hw)
 # 3.5 将数据分为特征值和标签值
 # 把数据分为特征值和标签值
 X_all = playing_stat.drop(['FTR'], 1)
+print('-'*50)
+print(X_all)
 y_all = playing_stat['FTR']
+print('-'*50)
+print(y_all)
 print('特征值的长度:', len(X_all))
 
 
@@ -430,6 +438,8 @@ def preprocess_features(X):
 
 
 X_all = preprocess_features(X_all)
+print('最后的x-all:')
+print(X_all)
 print("Processed feature columns ({} total features):\n{}".format(len(X_all.columns), list(X_all.columns)))
 
 """4.建立机器学习模型并进行预测"""
