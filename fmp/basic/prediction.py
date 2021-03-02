@@ -9,6 +9,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import f1_score
 from sklearn.preprocessing import scale
 import joblib
+from sklearn import preprocessing
 
 
 def binary(string):
@@ -27,6 +28,15 @@ def preprocess_features(x):
             col_data = pd.get_dummies(col_data, prefix=col)
         output = output.join(col_data)
     return output
+
+
+def change_type(x_all):
+    lbl = preprocessing.LabelEncoder()
+    # 将提示的包含错误数据类型这一列进行转换
+    x_all['home_team'] = lbl.fit_transform(x_all['home_team'].astype(str))
+    x_all['away_team'] = lbl.fit_transform(x_all['away_team'].astype(str))
+    x_all['home_team_goals'] = lbl.fit_transform(x_all['home_team_goals'].astype(str))
+    x_all['away_team_goals'] = lbl.fit_transform(x_all['away_team_goals'].astype(str))
 
 
 def train(features, target):
@@ -59,18 +69,24 @@ def handle(data):
 
     # data_frame = df_dict['2005-2006']
     data_frame = df_dict['2006-2007']
+    # data_frame = df_dict['2007-2008']
+    del data_frame['match_date']
+    del data_frame['match_season']
     data_frame['result'] = data_frame.result.apply(binary)
 
-    x_all = data_frame.drop(['match_date', 'match_season', 'result'], 1)
+    x_all = data_frame
     y_all = data_frame['result']
-    x_all = preprocess_features(x_all)
-    x_all = x_all[x_all.columns]
+    del x_all['result']
+    print(x_all)
 
+    change_type(x_all)
+    # x_all = preprocess_features(x_all)
+    # x_all = x_all[x_all.columns]
     x_train, x_test, y_train, y_test = train_test_split(x_all, y_all, test_size=0.3, random_state=2, stratify=y_all)
-
     # 训练
     # train(x_train, y_train)
     # 预测
     predict(x_train)
+    print(y_train)
 
     return
