@@ -10,83 +10,76 @@ from sklearn.metrics import f1_score
 from sklearn.preprocessing import scale
 import joblib
 from sklearn import preprocessing
+import numpy as np
+from pathlib import Path
+
+filepath = 'xgboost_model.model'
 
 
 def binary(string):
-    """主场胜利 是与否"""
+    """把比赛结果转化成 0 和 1"""
     if string == 'H':
         return 1
     else:
         return 0
 
 
-def preprocess_features(x):
-    """把离散的类型特征转为亚编码特征"""
-    output = pd.DataFrame(index=x.index)
-    for col, col_data in x.iteritems():
-        if col_data.dtype == object:
-            col_data = pd.get_dummies(col_data, prefix=col)
-        output = output.join(col_data)
-    return output
+def handle(data):
+    df = pd.DataFrame(data)
+    features = df[['home_team', 'away_team']]
+    target = df.result.apply(binary)
 
-
-def change_type(x_all):
+    # 将类型进行转化 xgb只接受有限的类型
     lbl = preprocessing.LabelEncoder()
-    # 将提示的包含错误数据类型这一列进行转换
-    x_all['home_team'] = lbl.fit_transform(x_all['home_team'].astype(str))
-    x_all['away_team'] = lbl.fit_transform(x_all['away_team'].astype(str))
-    x_all['home_team_goals'] = lbl.fit_transform(x_all['home_team_goals'].astype(str))
-    x_all['away_team_goals'] = lbl.fit_transform(x_all['away_team_goals'].astype(str))
+    features['home_team'] = lbl.fit_transform(features['home_team'].astype(str))
+    features['away_team'] = lbl.fit_transform(features['away_team'].astype(str))
+    x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.3, random_state=2,
+                                                        stratify=target)
+    return x_train, y_train
 
 
-def train(features, target):
-    """训练模型"""
+def train(data):
+    """训练"""
+    # 处理数据 获取特征值和标签
+    x_train, y_train = handle(data)
 
-    clf = xgb.XGBClassifier(seed=42)
+    # 检查模型文件是否已存在
+    model_file = Path(filepath)
+    if model_file.exists():
+        clf = joblib.load(filepath)
+    else:
+        clf = xgb.XGBClassifier(seed=42, use_label_encoder=False)
+
     # 训练
-    clf.fit(features, target)
+    clf.fit(x_train, y_train)
     # 保存模型
-    joblib.dump(clf, 'xgboost_model.model')
+    joblib.dump(clf, filepath)
 
 
-def predict(features):
-    """使用模型预测"""
+def predict(data):
+    """预测"""
 
     # 读取模型
-    model = joblib.load('xgboost_model.model')
+    model = joblib.load(filepath)
+    # 处理数据 获取特征值和标签
+    x_train, y_train = handle(data)
     # 预测
-    predict_result = model.predict(features)
+    predict_result = model.predict(x_train)
+    # 准确率
+    cp = sum(y_train == predict_result) / float(len(y_train))
 
-    print(predict_result)
+    return predict_result, cp
 
 
-# 数据处理逻辑
-def handle(data):
-    """处理逻辑"""
-    df_dict = {}
-    for k, v in data.items():
-        df_dict[k] = pd.DataFrame(v)
-
-    # data_frame = df_dict['2005-2006']
-    data_frame = df_dict['2006-2007']
-    # data_frame = df_dict['2007-2008']
-    del data_frame['match_date']
-    del data_frame['match_season']
-    data_frame['result'] = data_frame.result.apply(binary)
-
-    x_all = data_frame
-    y_all = data_frame['result']
-    del x_all['result']
-    print(x_all)
-
-    change_type(x_all)
-    # x_all = preprocess_features(x_all)
-    # x_all = x_all[x_all.columns]
-    x_train, x_test, y_train, y_test = train_test_split(x_all, y_all, test_size=0.3, random_state=2, stratify=y_all)
-    # 训练
-    # train(x_train, y_train)
-    # 预测
-    predict(x_train)
-    print(y_train)
-
+def statistical(arr):
+    """统计"""
+    # 求均值
+    arr_mean = np.mean(arr)
+    # 求方差
+    arr_var = np.var(arr)
+    # 求标准差
+    arr_std = np.std(arr, ddof=1)
+    print("平均值为：%f" % arr_mean)
+    print("方差为：%f" % arr_var)
+    print("标准差为:%f" % arr_std)
     return

@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from .models import MatchData
 from .read_csv import read_csv_line
-from .prediction import handle
+from .prediction import predict
 from django.core.serializers import serialize
 from django.core.serializers import python
 
@@ -13,19 +13,13 @@ def index(request):
         'code': 200,
         'message': '请求成功'
     }
-    # 获取赛季列表
-    season_list = MatchData.objects.values_list('match_season').distinct()
 
-    # 根据赛季分组
-    group_result = {}
-    for season in season_list:
-        queryset = MatchData.objects.filter(match_season=season[0])
-        dict_list = [model_to_dict(obj) for obj in queryset]
-        group_result[season[0]] = dict_list
+    # test
+    queryset = MatchData.objects.filter(match_season='2017-2018')
+    obj_list = [model_to_dict(obj) for obj in queryset]
+    predict_result, cp = predict(obj_list)
+    print(cp)
 
-    handle(group_result)
-
-    response['data'] = group_result
     return JsonResponse(response, json_dumps_params={
         'indent': 4,
         'ensure_ascii': False
