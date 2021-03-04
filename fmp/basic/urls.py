@@ -5,6 +5,7 @@ from . import views
 app_name = 'basic'
 
 urlpatterns = [
-    path('index/', views.index),
+    path('get-seasons/', views.get_seasons),
+    path('predict-test/', views.predict_test),
     path('import-csv/', views.import_cvs),
 ]

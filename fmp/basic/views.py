@@ -8,18 +8,47 @@ from django.core.serializers import serialize
 from django.core.serializers import python
 
 
-def index(request):
+def predict_test(request):
+    if request.POST:
+        response = {
+            'code': 200,
+            'message': '请求成功'
+        }
+        season = request.POST.get('season')
+        num = int(request.POST.get('num'))
+
+        queryset = MatchData.objects.filter(match_season=season)[:num]
+        obj_list = [model_to_dict(obj) for obj in queryset]
+        predict_result, cp = predict(obj_list)
+        for i in range(len(predict_result)):
+            obj_list[i]['predict_result'] = int(predict_result[i])
+            obj_list[i]['match_date'] = obj_list[i]['match_date'].strftime("%Y-%m-%d")
+
+        print(obj_list)
+
+        print(cp)
+        response['data'] = obj_list
+        return JsonResponse(response, json_dumps_params={
+            'indent': 4,
+            'ensure_ascii': False
+        })
+
+    return render(request, 'predict-test.html')
+
+
+def get_seasons(request):
     response = {
         'code': 200,
         'message': '请求成功'
     }
+    season_list = MatchData.objects.order_by('match_season').values_list('match_season').distinct().filter(
+        is_trained=False)
+    options = []
+    for k, v in enumerate(season_list):
 
-    # test
-    queryset = MatchData.objects.filter(match_season='2017-2018')
-    obj_list = [model_to_dict(obj) for obj in queryset]
-    predict_result, cp = predict(obj_list)
-    print(cp)
+        options.append({'label': v[0], 'value': v[0]})
 
+    response['data'] = options
     return JsonResponse(response, json_dumps_params={
         'indent': 4,
         'ensure_ascii': False

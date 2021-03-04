@@ -16,8 +16,8 @@ SIMPLEUI_CONFIG = {
                     'url': 'basic/matchdata/'
                 },
                 {
-                    'name': '爱奇艺',
-                    'url': 'https://www.iqiyi.com/dianshiju/'
+                    'name': '预测',
+                    'url': '/predict-test/'
                 },
             ],
         },

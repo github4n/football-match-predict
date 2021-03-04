@@ -8,18 +8,18 @@ from .models import MatchData
 from .prediction import train, predict
 
 
-class MatchDataResource(resources.ModelResource):
-    class Meta:
-        model = MatchData
-
-
 def get_all_season():
     season_list = MatchData.objects.order_by('match_season').values_list('match_season').distinct().filter(
         is_trained=False)
     options = []
     for k, v in enumerate(season_list):
-        options.append({'key': k+1, 'label': v[0]})
+        options.append({'key': k + 1, 'label': v[0]})
     return options
+
+
+class MatchDataResource(resources.ModelResource):
+    class Meta:
+        model = MatchData
 
 
 @admin.register(MatchData)
@@ -45,7 +45,7 @@ class MatchDataAdmin(ImportExportModelAdmin, AjaxAdmin):
     list_per_page = 20
 
     # 自定义按钮
-    actions = ('train', 'predict')
+    actions = ['train', ]
 
     def train(self, request, queryset):
         post = request.POST
@@ -92,61 +92,5 @@ class MatchDataAdmin(ImportExportModelAdmin, AjaxAdmin):
             'value': [],
             'label': '',
             'options': get_all_season()
-        }]
-    }
-
-    def predict(self, request, queryset):
-        # 这里的queryset 会有数据过滤，只包含选中的数据
-
-        post = request.POST
-        # 这里获取到数据后，可以做些业务处理
-        # post中的_action 是方法名
-        # post中 _selected 是选中的数据，逗号分割
-        print(post.get)
-        if not post.get('_action'):
-            return JsonResponse(data={
-                'status': 'error',
-                'msg': '请先选中数据！'
-            })
-        else:
-            return JsonResponse(data={
-                'status': 'success',
-                'msg': '处理成功！'
-            })
-
-    predict.short_description = '预测'
-    predict.type = 'success'
-    predict.icon = 'el-icon-s-promotion'
-    # 指定为弹出层，这个参数最关键
-    predict.layer = {
-        # 这里指定对话框的标题
-        'title': '请选择要预测的数据',
-
-        # 确认按钮显示文本
-        'confirm_button': '确认',
-        # 取消按钮显示文本
-        'cancel_button': '取消',
-
-        # 弹出层对话框的宽度，默认50%
-        'width': '40%',
-        # 表单中 label的宽度，对应element-ui的 label-width，默认80px
-        'labelWidth': "80px",
-
-        # 定义表单元素
-        'params': [{
-            'type': 'radio',
-            'key': 'radio',
-            'value': [],
-            'label': '赛季',
-            'options': [{
-                'key': '0',
-                'label': '收入'
-            }, {
-                'key': '1',
-                'label': '支出'
-            }, {
-                'key': '2',
-                'label': '收益'
-            }]
         }]
     }
