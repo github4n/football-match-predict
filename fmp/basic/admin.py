@@ -10,7 +10,8 @@ from .prediction import train, predict
 
 def get_all_season():
     season_list = MatchData.objects.order_by('match_season').values_list('match_season').distinct().filter(
-        is_trained=False)
+        is_trained=False
+    )
     options = []
     for k, v in enumerate(season_list):
         options.append({'key': k + 1, 'label': v[0]})

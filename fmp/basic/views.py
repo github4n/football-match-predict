@@ -3,6 +3,7 @@ import json
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import render
+from django.views import View
 from rest_framework.views import APIView
 
 from .models import MatchData
@@ -10,7 +11,7 @@ from .read_csv import read_csv_line
 from .prediction import predict
 
 
-class PredictView(APIView):
+class PredictView(View):
     def get(self, request):
         return render(request, 'predict-test.html')
 
@@ -19,21 +20,29 @@ class PredictView(APIView):
             'code': 200,
             'message': '请求成功'
         }
-        season = request.data.get('season')
-        num = request.data.get('num', 1)
-        num = int(num) + 1
+        if request.body:
+            data = request.body
+            data = data.decode(encoding='utf-8')
+            data = json.loads(data)
+            season = data['season']
+            num = data['num']
+        else:
+            data = request.POST
+            season = data['season']
+            num = data['num']
+
+        # num = int(num) + 1
 
         queryset = MatchData.objects.filter(match_season=season)[:num]
         obj_list = [model_to_dict(obj) for obj in queryset]
+        print(obj_list)
         predict_result, cp = predict(obj_list)
         for i in range(len(predict_result)):
             obj_list[i]['predict_result'] = int(predict_result[i])
             obj_list[i]['match_date'] = obj_list[i]['match_date'].strftime("%Y-%m-%d")
 
-        print(obj_list)
-
-        print(cp)
         response['data'] = obj_list
+        print(obj_list)
         return JsonResponse(response, json_dumps_params={
             'indent': 4,
             'ensure_ascii': False

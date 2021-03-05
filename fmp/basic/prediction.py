@@ -28,7 +28,8 @@ def handle(data):
     df = pd.DataFrame(data)
     features = df[['home_team', 'away_team']]
     target = df.result.apply(binary)
-
+    # print(features)
+    # print(target)
     # 将类型进行转化 xgb只接受有限的类型
     lbl = preprocessing.LabelEncoder()
     features['home_team'] = lbl.fit_transform(features['home_team'].astype(str))

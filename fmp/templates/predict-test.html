@@ -87,7 +87,8 @@
                     headers: {'Content-Type': 'application/json;charset=UTF-8'}
                 })
                     .then(function (response) {
-                        console.log(response);
+                        _this.tableData = response.data.data;
+                        console.log(response.data);
                     })
                     .catch(function (error) {
                         console.log(error);
