@@ -1,21 +1,27 @@
+import json
+
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from django.shortcuts import render
+from rest_framework.views import APIView
+
 from .models import MatchData
 from .read_csv import read_csv_line
 from .prediction import predict
-from django.core.serializers import serialize
-from django.core.serializers import python
 
 
-def predict_test(request):
-    if request.POST:
+class PredictView(APIView):
+    def get(self, request):
+        return render(request, 'predict-test.html')
+
+    def post(self, request):
         response = {
             'code': 200,
             'message': '请求成功'
         }
-        season = request.POST.get('season')
-        num = int(request.POST.get('num'))
+        season = request.data.get('season')
+        num = request.data.get('num', 1)
+        num = int(num) + 1
 
         queryset = MatchData.objects.filter(match_season=season)[:num]
         obj_list = [model_to_dict(obj) for obj in queryset]
@@ -33,8 +39,6 @@ def predict_test(request):
             'ensure_ascii': False
         })
 
-    return render(request, 'predict-test.html')
-
 
 def get_seasons(request):
     response = {
@@ -45,7 +49,6 @@ def get_seasons(request):
         is_trained=False)
     options = []
     for k, v in enumerate(season_list):
-
         options.append({'label': v[0], 'value': v[0]})
 
     response['data'] = options

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- import CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-ui@2.13.2/lib/theme-chalk/index.css">
+</head>
+<body>
+
+<div id="app">
+
+    <el-button @click="dialogFormVisible = true">预测</el-button>
+
+    <!-- dialog -->
+    <el-dialog title="预测输入" :visible.sync="dialogFormVisible">
+        <el-form :model="form">
+            <el-form-item label="赛季" :label-width="formLabelWidth">
+                <el-select v-model="form.season" placeholder="请选择赛季">
+                    <el-option v-for="season in seasons" :label="season.label" :value="season.value"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="场数" :label-width="formLabelWidth">
+                <el-input-number v-model="form.num" :min="1" autocomplete="off"></el-input-number>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="dialogFormVisible = false">取 消</el-button>
+            <el-button type="primary" @click="dialogFormVisible = false;predict()">确 定</el-button>
+        </div>
+    </el-dialog>
+
+    <!-- table -->
+    <el-table
+            :data="tableData"
+            stripe
+            style="width: 80%">
+        <el-table-column
+                prop="match_date"
+                label="比赛日期"
+                width="180">
+        </el-table-column>
+        <el-table-column
+                prop="home_team"
+                label="主场球队">
+        </el-table-column>
+        <el-table-column
+                prop="away_team"
+                label="客场球队">
+        </el-table-column>
+        <el-table-column
+                prop="result"
+                label="比赛结果">
+        </el-table-column>
+        <el-table-column
+                prop="predict_result"
+                label="预测结果">
+        </el-table-column>
+    </el-table>
+
+
+</div>
+</body>
+<!-- import Vue before Element -->
+<script src="https://cdn.jsdelivr.net/npm/vue"></script>
+<script src="/static/admin/simpleui-x/js/axios.min.js"></script>
+<!-- import JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/element-ui@2.13.2/lib/index.js"></script>
+<script>
+    new Vue({
+        el: '#app',
+        data: function () {
+            return {
+                dialogFormVisible: false,
+                form: {
+                    num: '',
+                    season: '',
+                },
+                formLabelWidth: '120px',
+                tableData: [],
+                seasons: []
+            }
+        },
+        methods: {
+            predict: function () {
+                let _this = this;
+                axios.post('/predict-test/', this.form, {
+                    headers: {'Content-Type': 'application/json;charset=UTF-8'}
+                })
+                    .then(function (response) {
+                        console.log(response);
+                    })
+                    .catch(function (error) {
+                        console.log(error);
+                    });
+            },
+
+        },
+        mounted: function () {
+            let _this = this;
+            axios.get('/get-seasons/')
+                .then(function (response) {
+                    _this.seasons = response.data.data
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+
+        },
+
+    })
+</script>
+</html>
