@@ -6,7 +6,7 @@ import pandas as pd  # 数据分析包
 import numpy as np
 import os
 
-"""1. 读取数据"""
+"""读取数据"""
 
 # 获取地址中的所有文件
 local_path = './/dataset//'  # 存放数据的路径
@@ -26,35 +26,29 @@ def file_name(file_path):
     # print(filecsv_list)
 
 
-# 1.1 读取 csv 数据
+# 读取 csv 数据
 file_name(local_path)
 
-# 1.2 时间列表
+# 时间列表
 time_list = [filecsv_list[i][0:4] for i in range(len(filecsv_list))]
 
-# 1.3 用 Pandas.read_csv() 接口读取数据
+# 用 Pandas.read_csv() 接口读取数据
 for i in range(len(res_name)):
-    print(local_path + filecsv_list[i])
     res_name[i] = pd.read_csv(local_path + filecsv_list[i], error_bad_lines=False, warn_bad_lines=False).dropna(
         axis=0, how='all')
-    print('第%2s个文件是%s,数据大小为%s' % (i + 1, filecsv_list[i], res_name[i].shape))
 
-# 1.4 删除空值的接口
-res_name[14] = res_name[14].dropna(axis=0, how='all')
-
-# 1.5 删除行数不是 380 的文件名
+# 删除行数不是 380 的文件名
 for i in range(len(res_name), 0, -1):
     # 采用从大到小的遍历方式，然后进行删除不满足条件的。
     if res_name[i - 1].shape[0] != 380:
         key = 'res_name[' + str(i) + ']'
-        print('删除的数据是：%s年的数据，文件名：%s大小是：%s' % (time_list[i - 1], key, res_name[i - 1].shape))
         res_name.pop(i - 1)
         time_list.pop(i - 1)
         continue
 
-"""2. 数据清洗和预处理"""
+"""数据清洗和预处理"""
 
-# 2.1 挑选信息列
+# 挑选信息列
 # 将挑选的信息放在一个新的列表中
 # HomeTeam: 主场球队名
 # AwayTeam: 客场球队名
@@ -68,62 +62,6 @@ playing_data = {}  # 键值对存储数据
 for i in range(len(res_name)):
     playing_statistics.append('playing_statistics_' + str(i + 1))
     playing_statistics[i] = res_name[i][columns_req]
-    print(time_list[i], 'playing_statistics[' + str(i) + ']', playing_statistics[i].shape)
-
-print(type(playing_statistics[0]))
-
-
-# 2.2 分析原始数据
-
-# 2.2.1 统计所有主场球队都会胜利的准确率
-def predictions_0(data):
-    """
-    当我们统计所有主场球队都赢，那么我们预测的结果是什么
-    返回值是预测值和实际值
-    """
-    predictions = []
-    for _, game in data.iterrows():
-
-        if game['FTR'] == 'H':
-            predictions.append(1)
-        else:
-            predictions.append(0)
-    # 返回预测结果
-    return pd.Series(predictions)
-
-
-# 那我们对19年全部主场球队都赢的结果进行预测，获取预测的准确率。
-avg_acc_sum = 0
-for i in range(len(playing_statistics)):
-    predictions = predictions_0(playing_statistics[i])
-    acc = sum(predictions) / len(playing_statistics[i])
-    avg_acc_sum += acc
-    print("%s年数据主场全胜预测的准确率是%s" % (time_list[i], acc))
-print('共%s年的平均准确率是：%s' % (len(playing_statistics), avg_acc_sum / len(playing_statistics)))
-
-
-# 2.2.2 统计所有客场球队都会胜利的准确率
-def predictions_1(data):
-    """
-    当我们统计所有客场球队都赢，那么我们预测的结果是什么
-    返回值是预测值和实际值
-    """
-    predictions = []
-    for _, game in data.iterrows():
-
-        if game['FTR'] == 'A':
-            predictions.append(1)
-        else:
-            predictions.append(0)
-    # 返回预测结果
-    return pd.Series(predictions)
-
-
-# 那我们对19年客场球队都赢的结果进行预测，获取预测的准确率。
-for i in range(len(playing_statistics)):
-    predictions = predictions_1(playing_statistics[i])
-    acc = sum(predictions) / len(playing_statistics[i])
-    print("%s年数据客场全胜预测的准确率是%s" % (time_list[i], acc))
 
 
 def score(data):
@@ -135,15 +73,10 @@ def score(data):
     return np.sum(scores)
 
 
-Arsenal_score = score(playing_statistics[2])
-print("Arsenal作为主场队伍在2005年时，累计进球数：%s" % (Arsenal_score))
-
-print(playing_statistics[5].groupby('HomeTeam').sum()['FTHG'])
-
-"""3. 特征工程"""
+"""特征工程"""
 
 
-# 3.1.1 计算每个队周累计净胜球数量
+# 计算每个队周累计净胜球数量
 def get_goals_diff(playing_stat):
     # 创建一个字典，每个 team 的 name 作为 key
     teams = {}
@@ -165,7 +98,6 @@ def get_goals_diff(playing_stat):
     # 行是 team 列是 matchweek,
     # 39解释：19个球队，每个球队分主场客场2次，共38个赛次，但是range取不到最后一个值，故38+1=39
     GoalsDifference = pd.DataFrame(data=teams, index=[i for i in range(1, 39)]).T
-    print(GoalsDifference)
 
     GoalsDifference[0] = 0
     # 累加每个队的周比赛的净胜球数
@@ -198,11 +130,10 @@ def get_gss(playing_stat):
 for i in range(len(playing_statistics)):
     playing_statistics[i] = get_gss(playing_statistics[i])
 
-print('查看构造特征后的05-06年的后五条数据:')
 print(playing_statistics[2].tail())
 
 
-# 3.1.2 统计主客场队伍到当前比赛周的累计得分
+#  统计主客场队伍到当前比赛周的累计得分
 # 把比赛结果转换为得分，赢得三分，平局得一分，输不得分
 def get_points(result):
     if result == 'W':
@@ -270,11 +201,10 @@ def get_agg_points(playing_stat):
 for i in range(len(playing_statistics)):
     playing_statistics[i] = get_agg_points(playing_statistics[i])
 
-print('查看构造特征后的05-06年的后五条数据:')
 print(playing_statistics[2].tail())
 
 
-# 3.1.3 统计某支队伍最近三场比赛的表现
+# 统计某支队伍最近三场比赛的表现
 def get_form(playing_stat, num):
     form = get_matchres(playing_stat)
     form_final = form.copy()
@@ -322,11 +252,10 @@ def add_form_df(playing_statistics):
 for i in range(len(playing_statistics)):
     playing_statistics[i] = add_form_df(playing_statistics[i])
 
-print('查看构造特征后的05-06年的后五条数据:')
 print(playing_statistics[2].tail())
 
 
-# 3.1.4 加入比赛周特征（第几个比赛周）
+# 加入比赛周特征（第几个比赛周）
 def get_mw(playing_stat):
     j = 1
     MatchWeek = []
@@ -341,15 +270,11 @@ def get_mw(playing_stat):
 for i in range(len(playing_statistics)):
     playing_statistics[i] = get_mw(playing_statistics[i])
 
-print('查看构造特征后的05-06年的后五条数据:')
 print(playing_statistics[2].tail())
 
-# 3.1.5 合并比赛的信息
+# 合并比赛的信息
 # 将各个DataFrame表合并在一张表中
 playing_stat = pd.concat(playing_statistics, ignore_index=True)
-
-print('---------------------------------------------------------------------------------------------------------------')
-print(playing_stat)
 
 # HTGD, ATGD ,HTP, ATP的值 除以 week 数，得到平均分
 cols = ['HTGD', 'ATGD', 'HTP', 'ATP']
@@ -357,10 +282,9 @@ playing_stat.MW = playing_stat.MW.astype(float)
 for col in cols:
     playing_stat[col] = playing_stat[col] / playing_stat.MW
 
-print('查看构造特征后数据集的后5五条数据:')
 print(playing_stat.tail())
 
-# 3.3 分析我们构造的数据
+# 分析构造的数据
 # 比赛总数
 n_matches = playing_stat.shape[0]
 
@@ -380,7 +304,7 @@ print("主场胜利数: {}".format(n_homewins))
 print("主场胜率: {:.2f}%".format(win_rate))
 
 
-# 3.4 解决样本不均衡问题
+# 解决样本不均衡问题
 # 定义 target ，也就是否 主场赢
 def only_hw(string):
     if string == 'H':
@@ -391,18 +315,13 @@ def only_hw(string):
 
 playing_stat['FTR'] = playing_stat.FTR.apply(only_hw)
 
-# 3.5 将数据分为特征值和标签值
 # 把数据分为特征值和标签值
 X_all = playing_stat.drop(['FTR'], 1)
-print('-'*50)
-print(X_all)
 y_all = playing_stat['FTR']
-print('-'*50)
-print(y_all)
 print('特征值的长度:', len(X_all))
 
 
-# 3.6 数据归一化、标准化
+#  数据归一化、标准化
 def convert_1(data):
     max = data.max()
     min = data.min()
@@ -417,7 +336,7 @@ cols = [['HTGD', 'ATGD', 'HTP', 'ATP']]
 for col in cols:
     X_all[col] = scale(X_all[col])
 
-# 3.7 转换特征数据类型
+#  转换特征数据类型
 # 把这些特征转换成字符串类型
 X_all.HM1 = X_all.HM1.astype('str')
 X_all.HM2 = X_all.HM2.astype('str')
@@ -438,11 +357,8 @@ def preprocess_features(X):
 
 
 X_all = preprocess_features(X_all)
-print('最后的x-all:')
-print(X_all)
-print("Processed feature columns ({} total features):\n{}".format(len(X_all.columns), list(X_all.columns)))
 
-"""4.建立机器学习模型并进行预测"""
+"""建立机器学习模型并进行预测"""
 
 from sklearn.model_selection import train_test_split
 
@@ -450,7 +366,7 @@ from sklearn.model_selection import train_test_split
 y_all = y_all.map({'NH': 0, 'H': 1})
 X_train, X_test, y_train, y_test = train_test_split(X_all, y_all, test_size=0.3, random_state=2, stratify=y_all)
 
-# 4.3 建立机器学习模型并评估
+# 建立机器学习模型并评估
 from time import time
 from sklearn.metrics import f1_score
 
@@ -476,7 +392,6 @@ def predict_labels(clf, features, target):
 
 def train_predict(clf, X_train, y_train, X_test, y_test):
     ''' 训练并评估模型 '''
-    # Indicate the classifier and the training set size
     print("训练 {} 模型，样本数量 {}。".format(clf.__class__.__name__, len(X_train)))
     # 训练模型
     train_classifier(clf, X_train, y_train)
@@ -488,24 +403,14 @@ def train_predict(clf, X_train, y_train, X_test, y_test):
     print("测试集上的 F1 分数和准确率为: {:.4f} , {:.4f}。".format(f1, acc))
 
 
-# 4.3.2 分别初始化，训练和评估模型
+# 分别初始化，训练和评估模型
 import xgboost as xgb
-from sklearn.linear_model import LogisticRegression
-from sklearn.svm import SVC
 
-# 分别建立三个模型
-clf_A = LogisticRegression(random_state=42)
-clf_B = SVC(random_state=42, kernel='rbf', gamma='auto')
-clf_C = xgb.XGBClassifier(seed=42)
+clf = xgb.XGBClassifier(seed=42)
 
-train_predict(clf_A, X_train, y_train, X_test, y_test)
-print('')
-train_predict(clf_B, X_train, y_train, X_test, y_test)
-print('')
-train_predict(clf_C, X_train, y_train, X_test, y_test)
-print('')
+train_predict(clf, X_train, y_train, X_test, y_test)
 
-# 4.4 超参数调整
+# 超参数调整
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import make_scorer
 import xgboost as xgb
@@ -528,12 +433,12 @@ clf = grid_obj.best_estimator_
 # print(clf)
 # 查看最终的模型效果
 f1, acc = predict_labels(clf, X_train, y_train)
-print("F1 score and accuracy score for training set: {:.4f} , {:.4f}。".format(f1, acc))
+print("训练集上的 F1 分数和准确率为: {:.4f} , {:.4f}。".format(f1, acc))
 
 f1, acc = predict_labels(clf, X_test, y_test)
-print("F1 score and accuracy score for test set: {:.4f} , {:.4f}。".format(f1, acc))
+print("测试集上的 F1 分数和准确率为: {:.4f} , {:.4f}。".format(f1, acc))
 
-# 4.5 保存模型和加载模型
+# 保存模型和加载模型
 import joblib
 
 # 保存模型

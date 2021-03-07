@@ -1,4 +1,5 @@
 from django.contrib import admin
+from django.db.models import Sum
 from django.forms import model_to_dict
 from django.http import JsonResponse
 from import_export.admin import ImportExportModelAdmin
@@ -16,6 +17,52 @@ def get_all_season():
     for k, v in enumerate(season_list):
         options.append({'key': k + 1, 'label': v[0]})
     return options
+
+
+def merge_goal_info(queryset, merge_qs=None):
+    if merge_qs:
+        qs = merge_qs
+    else:
+        qs = MatchData.objects.filter(is_trained=True)
+    home_team_total_goal_list = qs.values('home_team').annotate(sum=Sum('home_team_goals')).order_by(
+        'home_team')
+    away_team_total_goal_list = qs.values('away_team').annotate(sum=Sum('away_team_goals')).order_by(
+        'away_team')
+
+    # 统计所有球队的进球数
+    goal_info_list = []
+    exclude_team = []
+    for item in home_team_total_goal_list:
+        goal_info = {
+            'team': item['home_team'],
+            'total_goal': item['sum']
+        }
+        for each in away_team_total_goal_list:
+            if item['home_team'] == each['away_team']:
+                goal_info['total_goal'] += each['sum']
+                exclude_team.append(item['home_team'])
+        goal_info_list.append(goal_info)
+
+    for item in away_team_total_goal_list:
+        if item['away_team'] not in exclude_team:
+            goal_info = {
+                'team': item['home_team'],
+                'total_goal': item['sum']
+            }
+            goal_info_list.append(goal_info)
+
+    # 把总进球数 添加到比赛信息中
+    obj_list = []
+    for obj in queryset:
+        obj = model_to_dict(obj)
+        for goal_info in goal_info_list:
+            if obj['home_team'] == goal_info['team']:
+                obj['home_team_total_goals'] = goal_info['total_goal']
+            if obj['away_team'] == goal_info['team']:
+                obj['away_team_total_goals'] = goal_info['total_goal']
+        obj_list.append(obj)
+
+    return obj_list
 
 
 class MatchDataResource(resources.ModelResource):
@@ -60,9 +107,12 @@ class MatchDataAdmin(ImportExportModelAdmin, AjaxAdmin):
 
         checkbox_value_list = checkbox_value.split(',')
         queryset = MatchData.objects.filter(match_season__in=checkbox_value_list)
-        obj_list = [model_to_dict(obj) for obj in queryset]
+        obj_list = merge_goal_info(queryset, merge_qs=queryset)
+        # for item in obj_list[:10]:
+        #     print(item)
+        # 训练
         train(obj_list)
-        # queryset.update(is_trained=True)
+        queryset.update(is_trained=True)
 
         return JsonResponse(data={
             'status': 'success',

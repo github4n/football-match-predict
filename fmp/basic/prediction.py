@@ -26,10 +26,8 @@ def binary(string):
 
 def handle(data):
     df = pd.DataFrame(data)
-    features = df[['home_team', 'away_team']]
+    features = df[['home_team', 'away_team', 'home_team_total_goals', 'away_team_total_goals']]
     target = df.result.apply(binary)
-    # print(features)
-    # print(target)
     # 将类型进行转化 xgb只接受有限的类型
     lbl = preprocessing.LabelEncoder()
     features['home_team'] = lbl.fit_transform(features['home_team'].astype(str))
@@ -66,6 +64,9 @@ def predict(data):
     x_train, y_train = handle(data)
     # 预测
     predict_result = model.predict(x_train)
+
+    print('y_train', len(y_train))
+    print('predict_result:', len(predict_result))
     # 准确率
     cp = sum(y_train == predict_result) / float(len(y_train))
 
