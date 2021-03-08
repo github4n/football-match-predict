@@ -442,9 +442,9 @@ print("测试集上的 F1 分数和准确率为: {:.4f} , {:.4f}。".format(f1, 
 import joblib
 
 # 保存模型
-joblib.dump(clf, 'xgboost_model.model')
+joblib.dump(clf, 'xgboost_model_demo.model')
 # 读取模型
-xgb = joblib.load('xgboost_model.model')
+xgb = joblib.load('xgboost_model_demo.model')
 # 然后我们尝试来进行一个预测
 sample1 = X_test.sample(n=5, random_state=2)
 y_test_1 = y_test.sample(n=5, random_state=2)
