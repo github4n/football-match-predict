@@ -10,6 +10,7 @@
 <div id="app">
 
     <el-button @click="dialogFormVisible = true">预测</el-button>
+    <el-input v-model="cp" autocomplete="off"></el-input>
 
     <!-- dialog -->
     <el-dialog title="预测输入" :visible.sync="dialogFormVisible">
@@ -28,7 +29,6 @@
             <el-button type="primary" @click="dialogFormVisible = false;predict()">确 定</el-button>
         </div>
     </el-dialog>
-
     <!-- table -->
     <el-table
             :data="tableData"
@@ -48,7 +48,7 @@
                 label="客场球队">
         </el-table-column>
         <el-table-column
-                prop="result"
+                prop="result_zh"
                 label="比赛结果">
         </el-table-column>
         <el-table-column
@@ -77,7 +77,8 @@
                 },
                 formLabelWidth: '120px',
                 tableData: [],
-                seasons: []
+                seasons: [],
+                cp: 0,
             }
         },
         methods: {
@@ -88,6 +89,7 @@
                 })
                     .then(function (response) {
                         _this.tableData = response.data.data;
+                        _this.cp = response.data.cp;
                         console.log(response.data);
                     })
                     .catch(function (error) {

@@ -32,9 +32,9 @@ def handle(data):
     lbl = preprocessing.LabelEncoder()
     features['home_team'] = lbl.fit_transform(features['home_team'].astype(str))
     features['away_team'] = lbl.fit_transform(features['away_team'].astype(str))
-    x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.3, random_state=2,
-                                                        stratify=target)
-    return x_train, y_train
+    # x_train, x_test, y_train, y_test = train_test_split(features, target, test_size=0.3, random_state=2,
+    #                                                     stratify=target)
+    return features, target
 
 
 def train(data):
@@ -65,8 +65,6 @@ def predict(data):
     # 预测
     predict_result = model.predict(x_train)
 
-    print('y_train', len(y_train))
-    print('predict_result:', len(predict_result))
     # 准确率
     cp = sum(y_train == predict_result) / float(len(y_train))
 

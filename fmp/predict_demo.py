@@ -112,8 +112,7 @@ def get_gss(playing_stat):
     return playing_stat
 
 
-for i in range(len(playing_statistics)):
-    playing_statistics[i] = get_gss(playing_statistics[i])
+playing_statistics[2] = get_gss(playing_statistics[2])
 
 print(playing_statistics[2].tail())
 
@@ -183,93 +182,10 @@ def get_agg_points(playing_stat):
     return playing_stat
 
 
-for i in range(len(playing_statistics)):
-    playing_statistics[i] = get_agg_points(playing_statistics[i])
+playing_statistics[2] = get_agg_points(playing_statistics[2])
 
 print("统计主客场队伍到当前比赛周的累计得分:")
 print(playing_statistics[2].tail())
-
-
-# 统计某支队伍最近三场比赛的表现
-def get_form(playing_stat, num):
-    form = get_matchres(playing_stat)
-    form_final = form.copy()
-    for i in range(num, 39):
-        form_final[i] = ''
-        j = 0
-        while j < num:
-            form_final[i] += form[i - j]
-            j += 1
-    return form_final
-
-
-def add_form(playing_stat, num):
-    form = get_form(playing_stat, num)
-    # M 代表 unknown， 因为没有那么多历史
-    h = ['M' for i in range(num * 10)]
-    a = ['M' for i in range(num * 10)]
-    j = num
-    for i in range((num * 10), 380):
-        ht = playing_stat.iloc[i].HomeTeam
-        at = playing_stat.iloc[i].AwayTeam
-
-        past = form.loc[ht][j]
-        h.append(past[num - 1])
-
-        past = form.loc[at][j]
-        a.append(past[num - 1])
-
-        if ((i + 1) % 10) == 0:
-            j = j + 1
-
-    playing_stat['HM' + str(num)] = h
-    playing_stat['AM' + str(num)] = a
-
-    return playing_stat
-
-
-def add_form_df(playing_statistics):
-    playing_statistics = add_form(playing_statistics, 1)
-    playing_statistics = add_form(playing_statistics, 2)
-    playing_statistics = add_form(playing_statistics, 3)
-    return playing_statistics
-
-
-for i in range(len(playing_statistics)):
-    playing_statistics[i] = add_form_df(playing_statistics[i])
-
-print("统计某支队伍最近三场比赛的表现:")
-print(playing_statistics[2].tail())
-
-
-# 加入比赛周特征（第几个比赛周）
-def get_mw(playing_stat):
-    j = 1
-    MatchWeek = []
-    for i in range(380):
-        MatchWeek.append(j)
-        if ((i + 1) % 10) == 0:
-            j = j + 1
-    playing_stat['MW'] = MatchWeek
-    return playing_stat
-
-
-for i in range(len(playing_statistics)):
-    playing_statistics[i] = get_mw(playing_statistics[i])
-print("加入比赛周特征:")
-print(playing_statistics[2].tail())
-
-# 合并比赛的信息
-playing_stat = pd.concat(playing_statistics, ignore_index=True)
-
-# HTGD, ATGD ,HTP, ATP的值 除以 week 数，得到平均分
-cols = ['HTGD', 'ATGD', 'HTP', 'ATP']
-playing_stat.MW = playing_stat.MW.astype(float)
-for col in cols:
-    playing_stat[col] = playing_stat[col] / playing_stat.MW
-
-print("合并比赛的信息:")
-print(playing_stat.tail())
 
 
 # 定义 target ，也就是否 主场赢
@@ -280,7 +196,10 @@ def only_hw(string):
         return 'NH'
 
 
+playing_stat = playing_statistics[2]
 playing_stat['FTR'] = playing_stat.FTR.apply(only_hw)
+print('二分类:')
+print(playing_stat.tail())
 
 """3. 训练和预测"""
 
@@ -292,14 +211,6 @@ def change_type(X_all):
     cols = [['HTGD', 'ATGD', 'HTP', 'ATP']]
     for col in cols:
         X_all[col] = scale(X_all[col])
-
-    # 把以下特征转换成字符串类型
-    X_all.HM1 = X_all.HM1.astype('str')
-    X_all.HM2 = X_all.HM2.astype('str')
-    X_all.HM3 = X_all.HM3.astype('str')
-    X_all.AM1 = X_all.AM1.astype('str')
-    X_all.AM2 = X_all.AM2.astype('str')
-    X_all.AM3 = X_all.AM3.astype('str')
 
     return X_all
 
@@ -324,6 +235,8 @@ def train_predict(playing_stat):
 
     # 把数据分为特征值和标签值
     X_all = playing_stat.drop(['FTR'], 1)
+    print('X_all长度:', len(X_all))
+    print(X_all.tail())
     X_all = change_type(X_all)
     X_all = one_hot_encode(X_all)
 
@@ -334,7 +247,7 @@ def train_predict(playing_stat):
     X_train, X_test, y_train, y_test = train_test_split(X_all, y_all, test_size=0.3, random_state=2, stratify=y_all)
 
     # 初始化模型
-    clf = xgb.XGBClassifier(seed=42)
+    clf = xgb.XGBClassifier(seed=42, eval_metric='logloss')
     # 调整模型
     f1_scorer = make_scorer(f1_score, pos_label=1)
     parameters = {'n_estimators': [90, 100, 110], 'max_depth': [5, 6, 7]}
@@ -347,9 +260,9 @@ def train_predict(playing_stat):
     clf.fit(X_train, y_train)
 
     # 预测
-    y_pred = clf.predict(X_train)
+    X_pred = clf.predict(X_test)
 
-    cp = sum(y_train == y_pred) / float(len(y_pred))
+    cp = sum(y_test == X_pred) / float(len(X_pred))
 
     print('准确率:', cp)
 

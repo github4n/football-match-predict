@@ -53,8 +53,9 @@ def merge_goal_info(queryset, merge_qs=None):
 
     # 把总进球数 添加到比赛信息中
     obj_list = []
-    for obj in queryset:
-        obj = model_to_dict(obj)
+    for query in queryset:
+        obj = model_to_dict(query)
+        obj['result_zh'] = query.get_result_display()
         for goal_info in goal_info_list:
             if obj['home_team'] == goal_info['team']:
                 obj['home_team_total_goals'] = goal_info['total_goal']
