@@ -1,7 +1,4 @@
 # 导入必须的包
-import warnings
-
-warnings.filterwarnings('ignore')  # 防止警告文件的包
 import pandas as pd  # 数据分析包
 import numpy as np
 import os
@@ -58,6 +55,9 @@ for i in range(len(res_name)):
     playing_statistics.append('playing_statistics_' + str(i + 1))
     playing_statistics[i] = res_name[i][columns_req]
 
+print('原始数据:')
+print(playing_statistics[2].tail())  # 查看末尾五条数据
+
 """2. 根据已有信息构造特征"""
 
 
@@ -78,7 +78,6 @@ def get_goals_diff(playing_stat):
         teams[playing_stat.iloc[i].HomeTeam].append(HTGS - ATGS)
         # 把客场队伍的净胜球数添加到 team 这个 字典中对应的客场队伍下
         teams[playing_stat.iloc[i].AwayTeam].append(ATGS - HTGS)
-
     # 创建一个 GoalsDifference 的 dataframe
     # 行是 team 列是 matchweek,
     # 39解释：19个球队，每个球队分主场客场2次，共38个赛次，但是range取不到最后一个值，故38+1=39
@@ -114,6 +113,7 @@ def get_gss(playing_stat):
 
 playing_statistics[2] = get_gss(playing_statistics[2])
 
+print("构建特征'净胜球数量'后的数据")
 print(playing_statistics[2].tail())
 
 
@@ -158,6 +158,7 @@ def get_matchres(playing_stat):
             # 平局
             teams[playing_stat.iloc[i].AwayTeam].append('D')
             teams[playing_stat.iloc[i].HomeTeam].append('D')
+
     return pd.DataFrame(data=teams, index=[i for i in range(1, 39)]).T
 
 
@@ -184,7 +185,7 @@ def get_agg_points(playing_stat):
 
 playing_statistics[2] = get_agg_points(playing_statistics[2])
 
-print("统计主客场队伍到当前比赛周的累计得分:")
+print("构建特征'累计得分'后的数据:")
 print(playing_statistics[2].tail())
 
 
@@ -198,7 +199,7 @@ def only_hw(string):
 
 playing_stat = playing_statistics[2]
 playing_stat['FTR'] = playing_stat.FTR.apply(only_hw)
-print('二分类:')
+print("把比赛结果'H A D'用'H NH'来表示:")
 print(playing_stat.tail())
 
 """3. 训练和预测"""
@@ -235,7 +236,7 @@ def train_predict(playing_stat):
 
     # 把数据分为特征值和标签值
     X_all = playing_stat.drop(['FTR'], 1)
-    print('X_all长度:', len(X_all))
+    print('最终的预测数据:')
     print(X_all.tail())
     X_all = change_type(X_all)
     X_all = one_hot_encode(X_all)
