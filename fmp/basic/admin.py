@@ -109,9 +109,6 @@ class MatchDataAdmin(ImportExportModelAdmin, AjaxAdmin):
         checkbox_value_list = checkbox_value.split(',')
         queryset = MatchData.objects.filter(match_season__in=checkbox_value_list)
         obj_list = merge_goal_info(queryset, merge_qs=queryset)
-        # for item in obj_list[:10]:
-        #     print(item)
-        # 训练
         train(obj_list)
         queryset.update(is_trained=True)
 
